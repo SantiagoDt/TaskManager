@@ -23,11 +23,11 @@ public class TaskService {
 
     public Task createTask(String userId, CreateTaskRequest createRequest) {
         Task task = Task.builder()
-                .title(createRequest.getTitle())
-                .description(createRequest.getDescription() != null ? createRequest.getDescription() : "No description provided")
+                .title(createRequest.getTitle().trim())
+                .description(createRequest.getDescription())
                 .tags(createRequest.getTags() != null ? createRequest.getTags() : Collections.emptyList())
                 .priority(createRequest.getPriority() != null ? createRequest.getPriority() : Task.Priority.LOW)
-                .dueAt(createRequest.getDueAt()) // Fecha límite, puede ser null
+                .dueAt(createRequest.getDueAt())
                 .estimatedMinutes(createRequest.getEstimatedMinutes())
                 .userId(userId)
                 .status(Task.Status.PENDING)
