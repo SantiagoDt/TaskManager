@@ -5,12 +5,18 @@ import com.santiago.tasks.DTO.UpdateTaskRequest;
 import com.santiago.tasks.repository.TaskRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import com.santiago.tasks.domain.Task;
 import org.springframework.data.domain.Pageable;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 
@@ -18,7 +24,7 @@ import java.util.NoSuchElementException;
 @RequiredArgsConstructor
 
 public class TaskService {
-
+    private final MongoTemplate mongoTemplate;
     private final TaskRepository taskRepository;
 
     public Task createTask(String userId, CreateTaskRequest createRequest) {
@@ -48,8 +54,33 @@ public class TaskService {
                 .orElseThrow(() -> new NoSuchElementException("Task not found or unauthorized"));
     }
 
-    public Page<Task> getTasks(String userId, Pageable pageable) {
-        return taskRepository.findByUserId(userId, pageable);
+    public Page<Task> getTasks(String userId,
+                               Pageable pageable,
+                               Task.Status status,
+                               Task.Priority priority,
+                               List<String> tags,
+                               Instant createdFrom,
+                               Instant createdTo) {
+        List<Criteria> cs = new ArrayList<>();
+        cs.add(Criteria.where("userId").is(userId));
+        if (status != null) cs.add(Criteria.where("status").is(status));
+        if(priority != null) cs.add(Criteria.where("priority").is(priority));
+        if(tags != null && !tags.isEmpty()) cs.add(Criteria.where("tags").in(tags));
+        if(createdFrom != null || createdTo !=null){
+            Criteria c = Criteria.where("createdAt");
+            if(createdFrom != null) c = c.gte(createdFrom);
+            if(createdTo != null) c = c.lte(createdTo);
+            cs.add(c);
+        }
+
+
+        Criteria and = new Criteria().andOperator(cs.toArray(new Criteria[0]));
+        Query query = new Query(and).with(pageable);
+
+
+        List<Task> content = mongoTemplate.find(query, Task.class);
+        long total = mongoTemplate.count(Query.of(query).limit(-1).skip(-1), Task.class);
+        return new PageImpl<>(content, pageable, total);
     }
 
 
