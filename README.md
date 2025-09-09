@@ -9,7 +9,6 @@
 
 *Una API REST simple para gestión básica de tareas*
 
-[📖 API](#api) • [🚀 Instalación](#instalacion) • [🛠️ Configuración](#configuracion) • [📚 Documentación](#documentacion)
 
 </div>
 
