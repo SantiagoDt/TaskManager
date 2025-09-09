@@ -18,3 +18,13 @@ services:
       ME_CONFIG_MONGODB_ADMINPASSWORD: example
       ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
       ME_CONFIG_BASICAUTH: false
+  tasks-svc:
+    image: miusuario/tasks-svc:0.0.1
+    env_file:
+      - .env
+    depends_on:
+      - mongo
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
