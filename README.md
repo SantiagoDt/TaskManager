@@ -9,6 +9,7 @@
 
 *Una API REST simple para gestión básica de tareas*
 
+[📖 API](#-api-endpoints) • [🚀 Instalación](#-instalación-rápida) • [🛠️ Configuración](#️-configuración)
 
 </div>
 
@@ -33,7 +34,7 @@ TaskManager/
 ├── Service Layer       # Lógica de negocio  
 ├── Repository Layer    # Acceso a datos
 ├── Domain Models       # Entidades
-└── DTOs                # Transferencia de datos
+└── DTOs               # Transferencia de datos
 ```
 
 **Stack Tecnológico:**
@@ -48,9 +49,7 @@ TaskManager/
 
 ---
 
-<a id="instalacion"></a>
-
-## 🚀 Instalación Rápida
+##  Instalación Rápida
 
 ### Con Docker Compose
 
@@ -69,14 +68,12 @@ docker compose up -d
 ### Con Maven Local
 
 ```bash
-# Prerrequisitos: Java 21 + MongoDB ejecutándose
+# Prerequisitos: Java 21 + MongoDB ejecutándose
 cd tasks-svc
 mvn spring-boot:run
 ```
 
 ---
-
-<a id="api"></a>
 
 ## 📖 API Endpoints
 
@@ -132,5 +129,68 @@ curl -X POST http://localhost:8080/tasks \
 ### Obtener Tareas Filtradas
 
 ```bash
-curl "http://localhost:8080/tasks?status=PENDING&priorit
+curl "http://localhost:8080/tasks?status=PENDING&priority=HIGH&size=5" \
+  -H "X-USER-ID: user123"
 ```
+
+### Actualizar Estado
+
+```bash
+curl -X PATCH http://localhost:8080/tasks/{taskId} \
+  -H "Content-Type: application/json" \
+  -H "X-USER-ID: user123" \
+  -d '{"status": "DONE"}'
+```
+
+### Estados y Prioridades
+
+**Estados:**
+
+* `PENDING` - Tarea pendiente
+* `IN_PROGRESS` - En progreso
+* `DONE` - Completada
+
+**Prioridades:**
+
+* `LOW` - Baja prioridad
+* `MEDIUM` - Prioridad media
+* `HIGH` - Alta prioridad
+
+---
+
+## 📚 Documentación API
+
+Una vez ejecutando la aplicación:
+
+* **Swagger UI**: [http://localhost:8080/swagger-ui/index.html#/](http://localhost:8080/swagger-ui/index.html#/)
+* **OpenAPI JSON**: [http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs)
+* **Mongo Express**: [http://localhost:8081](http://localhost:8081)
+
+---
+
+## Validaciones
+
+### Creación de Tareas
+
+* **Título**: Obligatorio, máximo 20 caracteres
+* **Descripción**: Opcional, máximo 200 caracteres
+* **Fecha vencimiento**: Debe ser presente o futura
+* **Minutos estimados**: Entre 1 y 1440 (24 horas)
+
+---
+
+## 🤝 Contribuir
+
+1. Fork el repositorio
+2. Crea tu feature branch (`git checkout -b feature/NuevaFeature`)
+3. Commit tus cambios (`git commit -m 'Agregar nueva funcionalidad'`)
+4. Push al branch (`git push origin feature/NuevaFeature`)
+5. Abre un Pull Request
+
+---
+
+<div align="center">
+
+Hecho con ❤️ por [Santiago](https://github.com/SantiagoDt)
+
+</div>
