@@ -1,5 +1,13 @@
 package com.santiago.tasks.config;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import org.springframework.boot.jackson.JsonComponent;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Sort;
+
+import java.io.IOException;
 @JsonComponent
 public class PageImplJacksonSerializer extends JsonSerializer<PageImpl<?>> {
     @SuppressWarnings("rawtypes")
