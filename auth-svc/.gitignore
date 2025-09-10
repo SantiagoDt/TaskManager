@@ -31,23 +31,3 @@ build/
 
 ### VS Code ###
 .vscode/
-.env
-
-# Maven
-target/
-!.mvn/wrapper/maven-wrapper.jar
-
-# IntelliJ
-.idea/
-*.iml
-
-# MacOS
-.DS_Store
-
-# Logs
-*.log
-
-# Spring Boot
-*.properties.local
-
-.DS_Store
