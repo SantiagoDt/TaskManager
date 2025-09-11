@@ -2,7 +2,9 @@ package com.santiago.auth.controller;
 
 import com.santiago.auth.domain.User;
 import com.santiago.auth.dto.LoginDTO;
+import com.santiago.auth.dto.LoginResponse;
 import com.santiago.auth.dto.RegisterDTO;
+import com.santiago.auth.dto.RegisterResponse;
 import com.santiago.auth.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,11 +19,11 @@ public class authController {
     @Autowired
     private AuthService authService;
     @PostMapping("/register")
-    public User register(@Valid @RequestBody RegisterDTO registerRequest){
+    public RegisterResponse register(@Valid @RequestBody RegisterDTO registerRequest){
         return authService.register(registerRequest);
     }
     @PostMapping("/login")
-    public User login(@Valid @RequestBody LoginDTO loginRequest){
+    public LoginResponse login(@Valid @RequestBody LoginDTO loginRequest){
         return authService.login(loginRequest);
     }
 }
