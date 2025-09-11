@@ -91,6 +91,15 @@ docker compose up -d
 docker compose ps
 ```
 
+> [!IMPORTANT]  
+> Antes de arrancar con `docker compose up -d`, debes **construir las imágenes localmente** con:  
+> ```bash
+> docker build -t miusuario/auth-svc:0.0.1 ./auth-svc
+> docker build -t miusuario/tasks-svc:0.0.1 ./tasks-svc
+> ```
+> 
+> Próximamente las imágenes estarán disponibles en **Docker Hub**, lo que permitirá usar `docker compose` directamente con `docker pull` sin necesidad de build local.
+
 **Servicios disponibles:**
 - **Auth Service** → http://localhost:8083
 - **Tasks Service** → http://localhost:8080  
