@@ -3,7 +3,7 @@ services:
     image: mongo:7
     restart: always
     env_file:
-      - .env
+      - tasks-svc/.env
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASS}
@@ -16,7 +16,7 @@ services:
     image: mongo-express
     restart: always
     env_file:
-      - .env
+      - tasks-svc/.env
     environment:
       ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_USER}
       ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_PASS}
@@ -33,11 +33,21 @@ services:
   tasks-svc:
     image: miusuario/tasks-svc:0.0.1
     env_file:
-      - .env
+      - tasks-svc/.env
     depends_on:
       - mongo
     ports:
       - "8080:8080"
+    restart: unless-stopped
+
+  auth-svc:
+    image: miusuario/auth-svc:0.0.1
+    env_file:
+      - auth-svc/.env
+    depends_on:
+      - mongo
+    ports:
+      - "8083:8083"
     restart: unless-stopped
 
 volumes:
