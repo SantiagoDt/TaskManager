@@ -2,9 +2,12 @@ package com.santiago.auth.service;
 
 import com.santiago.auth.domain.User;
 import com.santiago.auth.dto.LoginDTO;
+import com.santiago.auth.dto.LoginResponse;
 import com.santiago.auth.dto.RegisterDTO;
+import com.santiago.auth.dto.RegisterResponse;
 import com.santiago.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -21,11 +24,13 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private JwtService jwtService;
 
-    public User register(RegisterDTO registerRequest) {
 
-
+    public RegisterResponse register(RegisterDTO registerRequest) {
         String hashedPassword = passwordEncoder.encode(registerRequest.getPassword());
+
         User user = User.builder()
                 .username(registerRequest.getUsername())
                 .email(registerRequest.getEmail().toLowerCase())
@@ -37,19 +42,44 @@ public class AuthService {
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
                 .build();
-        return userRepository.save(user);
+
+        User saved = userRepository.save(user);
+
+        return RegisterResponse.builder()
+                .message("Registration successful")
+                .username(saved.getUsername())
+                .email(saved.getEmail())
+                .createdAt(saved.getCreatedAt())
+                .build();
     }
 
-    public User login(LoginDTO loginRequest) {
+    public LoginResponse login(LoginDTO loginRequest) {
         final Instant now = Instant.now();
         final String email = loginRequest.getEmail().trim().toLowerCase(Locale.ROOT);
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Invalid email or password"));
+                .orElse(null);
 
-        // Verify if account is locked
+
+        if (user == null) {
+            return LoginResponse.builder()
+                    .message("Invalid email or password")
+                    .username(null)
+                    .email(email)
+                    .lastLoginAt(null)
+                    .build();
+        }
+
+        // If account is locked
         if (user.getAccountLockedUntil() != null && now.isBefore(user.getAccountLockedUntil())) {
-            throw new RuntimeException("Account is locked. Try again later.");
+
+            userRepository.save(user);
+            return LoginResponse.builder()
+                    .message("Account is locked. Try again later.")
+                    .username(user.getUsername())
+                    .email(user.getEmail())
+                    .lastLoginAt(user.getLastLoginAt())
+                    .build();
         }
 
         // Compare passwords
@@ -63,14 +93,35 @@ public class AuthService {
             }
 
             userRepository.save(user);
-            throw new RuntimeException("Invalid email or password");
+
+            String msg = attempts >= MAX_ATTEMPTS
+                    ? "Invalid email or password. Account locked for " + LOCK_MINUTES + " minutes."
+                    : "Invalid email or password";
+
+            return LoginResponse.builder()
+                    .message(msg)
+                    .username(user.getUsername())
+                    .email(user.getEmail())
+                    .lastLoginAt(user.getLastLoginAt())
+                    .build();
         }
-        //Reset attempts on successful login
-        user.setFailedLoginAttempts(0);
+
+
         user.setAccountLockedUntil(null);
         user.setLastLoginAt(now);
+        User saved = userRepository.save(user);
 
-        return userRepository.save(user);
+
+        String token = jwtService.generateToken(saved.getId());
+
+
+        return LoginResponse.builder()
+                .message("Login successful")
+                .username(saved.getUsername())
+                .email(saved.getEmail())
+                .lastLoginAt(saved.getLastLoginAt())
+                .token(token)
+                .build();
     }
 
 
