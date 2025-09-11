@@ -31,7 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
-.env
+*/.env
 
 # Maven
 target/
@@ -51,3 +51,5 @@ target/
 *.properties.local
 
 .DS_Store
+
+*.env
