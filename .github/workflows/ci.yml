@@ -33,6 +33,7 @@ jobs:
       MONGO_USER: root
       MONGO_PASS: example
       MONGO_AUTHDB: admin
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
 
     steps:
       - name: Checkout repo
