@@ -5,13 +5,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
-
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
-@AutoConfigureMockMvc
+@SpringBootTest(properties = {
+        "jwt.secret=0123456789_0123456789_0123456789__OK"
+})
+@AutoConfigureMockMvc(addFilters = false)
 public class TaskControllerValidationTest {
 
     @Autowired
@@ -30,10 +30,9 @@ public class TaskControllerValidationTest {
   """;
 
         mockMvc.perform(post("/tasks")
-                        .header("X-USER-ID", "Santi")
+                        .requestAttr("userId", "Santi")
                         .contentType("application/json")
                         .content(body))
-                .andDo(print())
                 .andExpect(status().isBadRequest());
     }
 
@@ -51,10 +50,9 @@ public class TaskControllerValidationTest {
         """;
 
         mockMvc.perform(post("/tasks")
-                        .header("X-USER-ID", "Santi")
+                        .requestAttr("userId", "Santi")
                         .contentType("application/json")
                         .content(body))
-                .andDo(print())
                 .andExpect(status().isBadRequest());
     }
 
@@ -72,10 +70,9 @@ public class TaskControllerValidationTest {
         """;
 
         mockMvc.perform(post("/tasks")
-                        .header("X-USER-ID", "Santi")
+                        .requestAttr("userId", "Santi")
                         .contentType("application/json")
                         .content(body))
-                .andDo(print())
                 .andExpect(status().isBadRequest());
     }
 
