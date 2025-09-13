@@ -4,6 +4,7 @@ import com.santiago.tasks.DTO.CreateTaskRequest;
 import com.santiago.tasks.DTO.UpdateTaskRequest;
 import com.santiago.tasks.domain.Task;
 import com.santiago.tasks.service.TaskService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -24,8 +25,9 @@ public class TaskController {
 
     @PostMapping
     public Task createTask(
-            @RequestHeader("X-USER-ID") String userId,
+            HttpServletRequest request,
             @Valid @RequestBody CreateTaskRequest req) {
+        String userId = request.getAttribute("userId").toString();
         return taskService.createTask(userId, req);
     }
 
