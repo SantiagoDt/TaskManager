@@ -26,19 +26,19 @@ public class TaskController {
     @PostMapping
     public Task createTask(
             HttpServletRequest request,
-            @Valid @RequestBody CreateTaskRequest req) {
+            @Valid @RequestBody CreateTaskRequest taskRequest) {
         String userId = request.getAttribute("userId").toString();
-        return taskService.createTask(userId, req);
+        return taskService.createTask(userId, taskRequest);
     }
 
     @GetMapping("/{taskId}")
-    public Task getTask(@RequestHeader("X-USER-ID") String userId, @PathVariable String taskId) {
+    public Task getTask(HttpServletRequest request, @PathVariable String taskId) {
+        String userId = request.getAttribute("userId").toString();
         return taskService.getTask(userId, taskId);
     }
 
     @GetMapping
-    public Page<Task> getTasks(
-            @RequestHeader("X-USER-ID") String userId,
+    public Page<Task> getTasks(HttpServletRequest request,
             Pageable pageable,
             @RequestParam(required = false) Task.Status status,
             @RequestParam(required = false) Task.Priority priority,
@@ -46,16 +46,19 @@ public class TaskController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant createdFrom,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant createdTo
     ) {
+        String userId = request.getAttribute("userId").toString();
         return taskService.getTasks(userId, pageable, status, priority, tags, createdFrom, createdTo);
     }
 
     @DeleteMapping("/{taskId}")
-    public void deleteTask(@RequestHeader("X-USER-ID") String userId, @PathVariable String taskId) {
+    public void deleteTask(HttpServletRequest request , @PathVariable String taskId) {
+        String userId = request.getAttribute("userId").toString();
         taskService.deleteTask(userId, taskId);
     }
 
     @PatchMapping("/{taskId}")
-    public Task updateTask(@RequestHeader("X-USER-ID") String userId, @PathVariable String taskId, @RequestBody UpdateTaskRequest req) {
+    public Task updateTask(HttpServletRequest request, @PathVariable String taskId, @RequestBody UpdateTaskRequest req) {
+        String userId = request.getAttribute("userId").toString();
         return taskService.updateTask(userId, taskId, req);
     }
 
