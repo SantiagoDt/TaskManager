@@ -31,7 +31,7 @@ services:
       - mongo
 
   tasks-svc:
-    image: miusuario/tasks-svc:0.0.1
+    image: santiagodt/tasks-svc:0.0.1
     env_file:
       - tasks-svc/.env
     depends_on:
@@ -41,7 +41,7 @@ services:
     restart: unless-stopped
 
   auth-svc:
-    image: miusuario/auth-svc:0.0.1
+    image: santiagodt/auth-svc:0.0.1
     env_file:
       - auth-svc/.env
     depends_on:
