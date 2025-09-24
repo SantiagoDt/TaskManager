@@ -1,0 +1,273 @@
+{
+  "info": {
+    "_postman_id": "c2a9d2c8-4b52-4b9e-9921-6a5b6c8e0001",
+    "name": "TaskManager API",
+    "description": "# 🧪 TaskManager Postman Collection\n\nFlujo completo: **Register → Login (guarda token) → Create Task → List/GET/PATCH/DELETE**.\n\n- Variables:\n  - `auth_base`: http://localhost:8083\n  - `tasks_base`: http://localhost:8080\n  - `token`: se setea en **Login** automáticamente\n  - `task_id`: se setea al **crear** una tarea\n\nAutorización a nivel de colección: **Bearer {{token}}** (Register/Login usan **No Auth**).\n",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "santi-local"
+  },
+  "item": [
+    {
+      "name": "Auth - Register",
+      "request": {
+        "auth": { "type": "noauth" },
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"maria\",\n  \"password\": \"supersecret456\",\n  \"email\": \"maria@example.com\"\n}"
+        },
+        "url": {
+          "raw": "{{auth_base}}/auth/register",
+          "host": ["{{auth_base}}"],
+          "path": ["auth", "register"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Register 200/201', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth - Login (sets {{token}})",
+      "request": {
+        "auth": { "type": "noauth" },
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"maria@example.com\",\n  \"password\": \"supersecret456\"\n}"
+        },
+        "url": {
+          "raw": "{{auth_base}}/auth/login",
+          "host": ["{{auth_base}}"],
+          "path": ["auth", "login"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Login 200', () => pm.response.to.have.status(200));",
+              "const data = pm.response.json();",
+              "pm.expect(data).to.have.property('token');",
+              "// Guarda token a nivel de COLECCIÓN",
+              "pm.collectionVariables.set('token', data.token);",
+              "pm.test('Token saved to {{token}}', () => pm.expect(pm.collectionVariables.get('token')).to.exist);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tasks - Create",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (!pm.collectionVariables.get('token')) {",
+              "  postman.setNextRequest('Auth - Login (sets {{token}})');",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Created 201', function () { pm.response.to.have.status(201); });",
+              "pm.test('Has Location header', function () { pm.expect(pm.response.headers.has('Location')).to.be.true; });",
+              "const data = pm.response.json();",
+              "pm.collectionVariables.set('task_id', data.id);",
+              "pm.test('task_id stored', function () { pm.expect(pm.collectionVariables.get('task_id')).to.exist; });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Primera tarea\",\n  \"description\": \"Creada desde Postman\"\n}"
+        },
+        "url": {
+          "raw": "{{tasks_base}}/tasks",
+          "host": ["{{tasks_base}}"],
+          "path": ["tasks"]
+        }
+      }
+    },
+    {
+      "name": "Tasks - List (filters + pagination)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{tasks_base}}/tasks?status={{status}}&priority={{priority}}&tags={{tags}}&createdFrom={{createdFrom}}&createdTo={{createdTo}}&page={{page}}&size={{size}}&sort={{sort}}",
+          "host": ["{{tasks_base}}"],
+          "path": ["tasks"],
+          "query": [
+            { "key": "status", "value": "{{status}}", "disabled": false },
+            { "key": "priority", "value": "{{priority}}", "disabled": false },
+            { "key": "tags", "value": "{{tags}}", "disabled": false },
+            { "key": "createdFrom", "value": "{{createdFrom}}", "disabled": false },
+            { "key": "createdTo", "value": "{{createdTo}}", "disabled": false },
+            { "key": "page", "value": "{{page}}" },
+            { "key": "size", "value": "{{size}}" },
+            { "key": "sort", "value": "{{sort}}" }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('List 200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tasks - Get by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{tasks_base}}/tasks/{{task_id}}",
+          "host": ["{{tasks_base}}"],
+          "path": ["tasks", "{{task_id}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (!pm.collectionVariables.get('task_id')) {",
+              "  throw new Error('task_id vacío. Crea una tarea primero.');",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Get 200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tasks - Patch",
+      "request": {
+        "method": "PATCH",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Primera tarea (edit)\",\n  \"status\": \"IN_PROGRESS\",\n  \"priority\": \"MEDIUM\"\n}"
+        },
+        "url": {
+          "raw": "{{tasks_base}}/tasks/{{task_id}}",
+          "host": ["{{tasks_base}}"],
+          "path": ["tasks", "{{task_id}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (!pm.collectionVariables.get('task_id')) {",
+              "  throw new Error('task_id vacío. Crea una tarea primero.');",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Patch 200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tasks - Delete",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{tasks_base}}/tasks/{{task_id}}",
+          "host": ["{{tasks_base}}"],
+          "path": ["tasks", "{{task_id}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (!pm.collectionVariables.get('task_id')) {",
+              "  throw new Error('task_id vacío. Crea una tarea primero.');",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Delete 200/204', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));",
+              "pm.collectionVariables.unset('task_id');"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "event": [],
+  "variable": [
+    { "key": "auth_base", "value": "http://localhost:8083" },
+    { "key": "tasks_base", "value": "http://localhost:8080" },
+    { "key": "token", "value": "" },
+    { "key": "task_id", "value": "" },
+    { "key": "status", "value": "PENDING" },
+    { "key": "priority", "value": "HIGH" },
+    { "key": "tags", "value": "docs" },
+    { "key": "page", "value": "0" },
+    { "key": "size", "value": "20" },
+    { "key": "createdFrom", "value": "2025-09-01T00:00:00Z" },
+    { "key": "createdTo", "value": "2025-09-30T23:59:59Z" },
+    { "key": "sort", "value": "createdAt,desc" }
+  ]
+}
