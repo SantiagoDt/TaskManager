@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
 import java.util.List;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import java.net.URI;
 
 
 @RestController
@@ -24,21 +27,30 @@ public class TaskController {
     private TaskService taskService;
 
     @PostMapping
-    public Task createTask(
+    public ResponseEntity<Task> createTask(
             HttpServletRequest request,
             @Valid @RequestBody CreateTaskRequest taskRequest) {
         String userId = request.getAttribute("userId").toString();
-        return taskService.createTask(userId, taskRequest);
+        Task task = taskService.createTask(userId, taskRequest);
+
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(task.getId())
+                .toUri();
+
+        return ResponseEntity.created(location).body(task);
     }
 
     @GetMapping("/{taskId}")
-    public Task getTask(HttpServletRequest request, @PathVariable String taskId) {
+    public ResponseEntity<Task> getTask(HttpServletRequest request, @PathVariable String taskId) {
         String userId = request.getAttribute("userId").toString();
-        return taskService.getTask(userId, taskId);
+        Task task = taskService.getTask(userId, taskId);
+        return ResponseEntity.ok(task);
     }
 
     @GetMapping
-    public Page<Task> getTasks(HttpServletRequest request,
+    public ResponseEntity<Page<Task>> getTasks(HttpServletRequest request,
             Pageable pageable,
             @RequestParam(required = false) Task.Status status,
             @RequestParam(required = false) Task.Priority priority,
@@ -47,19 +59,22 @@ public class TaskController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant createdTo
     ) {
         String userId = request.getAttribute("userId").toString();
-        return taskService.getTasks(userId, pageable, status, priority, tags, createdFrom, createdTo);
+        Page<Task> page = taskService.getTasks(userId, pageable, status, priority, tags, createdFrom, createdTo);
+        return ResponseEntity.ok(page);
     }
 
     @DeleteMapping("/{taskId}")
-    public void deleteTask(HttpServletRequest request , @PathVariable String taskId) {
+    public ResponseEntity<Void> deleteTask(HttpServletRequest request , @PathVariable String taskId) {
         String userId = request.getAttribute("userId").toString();
         taskService.deleteTask(userId, taskId);
+        return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{taskId}")
-    public Task updateTask(HttpServletRequest request, @PathVariable String taskId, @RequestBody UpdateTaskRequest req) {
+    public ResponseEntity<Task> updateTask(HttpServletRequest request, @PathVariable String taskId, @RequestBody UpdateTaskRequest req) {
         String userId = request.getAttribute("userId").toString();
-        return taskService.updateTask(userId, taskId, req);
+        Task updated = taskService.updateTask(userId, taskId, req);
+        return ResponseEntity.ok(updated);
     }
 
 
