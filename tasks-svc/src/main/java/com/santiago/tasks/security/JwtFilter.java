@@ -2,30 +2,33 @@ package com.santiago.tasks.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.security.Key;
 import java.util.List;
 
-import io.jsonwebtoken.JwtException;
-
 @Component
 public class JwtFilter extends OncePerRequestFilter {
 
+    private final Key secretKey;
+    private final AuthenticationEntryPoint entryPoint;
 
-    private Key secretKey;
-
-    public JwtFilter(@Value("${jwt.secret}") String secret) {
+    public JwtFilter(@Value("${jwt.secret}") String secret,
+                     AuthenticationEntryPoint entryPoint) {
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes());
+        this.entryPoint = entryPoint;
     }
 
     @Override
@@ -36,14 +39,17 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String header = request.getHeader("Authorization");
         if (header == null || !header.startsWith("Bearer ")) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            return;
+            SecurityContextHolder.clearContext();
+            request.setAttribute("jwt_error", "Missing Bearer token");
+            entryPoint.commence(request, response,
+                    new InsufficientAuthenticationException("Missing Bearer token"));
         }
 
         String token = header.substring(7);
         try {
             Claims claims = Jwts.parserBuilder()
-                    .setSigningKey(secretKey).build()
+                    .setSigningKey(secretKey)
+                    .build()
                     .parseClaimsJws(token)
                     .getBody();
 
@@ -53,14 +59,15 @@ public class JwtFilter extends OncePerRequestFilter {
                     userId, null, List.of()
             );
             SecurityContextHolder.getContext().setAuthentication(auth);
-
             request.setAttribute("userId", userId);
-        }  catch (JwtException e) {
-        System.out.println("JWT error: " + e.getClass().getSimpleName() + " - " + e.getMessage());
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        return;
-    }
 
-        filterChain.doFilter(request, response);
+            filterChain.doFilter(request, response);
+
+        } catch (JwtException e) {
+            SecurityContextHolder.clearContext();
+            request.setAttribute("jwt_error", "JWT invalid or expired");
+            entryPoint.commence(request, response,
+                    new InsufficientAuthenticationException("JWT invalid or expired", e));
+        }
     }
 }
